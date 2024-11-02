@@ -35,15 +35,19 @@ func (p *Peers) Len() int           { return len(p.list) }
 func (p *Peers) Swap(i, j int)      { p.list[i], p.list[j] = p.list[j], p.list[i] }
 func (p *Peers) Less(i, j int) bool { return p.list[i].Latency < p.list[j].Latency }
 
+var version = "dev"
+
 var (
-	includeBad  bool
-	includeAvg  bool
-	dialTimeout int
-	thread      int
-	csvOutput   string
+	displayVersion bool
+	includeBad     bool
+	includeAvg     bool
+	dialTimeout    int
+	thread         int
+	csvOutput      string
 )
 
 func init() {
+	flag.BoolVar(&displayVersion, "version", false, "Display version")
 	flag.BoolVar(&includeBad, "include-bad", false, "Include bad status peers")
 	flag.BoolVar(&includeAvg, "include-avg", false, "Include average status peers")
 	flag.IntVar(&dialTimeout, "dial-timeout", 5, "Dial timeout (second)")
@@ -53,6 +57,11 @@ func init() {
 }
 
 func main() {
+	if displayVersion {
+		fmt.Println(version)
+		return
+	}
+
 	sourceURL := flag.Arg(0)
 	if sourceURL == "" {
 		sourceURL = "https://publicpeers.neilalexander.dev/"
