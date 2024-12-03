@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.0
-	github.com/quic-go/quic-go v0.48.1
+	github.com/quic-go/quic-go v0.48.2
 )
 
 require (
