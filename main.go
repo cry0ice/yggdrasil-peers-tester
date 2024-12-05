@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -44,6 +45,12 @@ var (
 	dialTimeout    int
 	thread         int
 	csvOutput      string
+)
+
+var (
+	peerNum              int64
+	connectablePeerNum   int64
+	unconnectablePeerNum int64
 )
 
 func init() {
@@ -105,20 +112,24 @@ func main() {
 	for _, p := range peers {
 		ch <- struct{}{}
 		wg.Add(1)
+		peerNum++
 		go func() {
 			defer wg.Done()
 			u, err := url.Parse(p)
 			if err != nil {
 				log.Println("pinging", p, "error:", err)
 				<-ch
+				atomic.AddInt64(&unconnectablePeerNum, 1)
 				return
 			}
 			latency, err := getLatency(u)
 			if err != nil {
 				log.Println("pinging", p, "error:", err)
+				atomic.AddInt64(&unconnectablePeerNum, 1)
 				<-ch
 				return
 			}
+			atomic.AddInt64(&connectablePeerNum, 1)
 			peerList.mu.Lock()
 			peerList.list = append(peerList.list, Peer{
 				URL:     p,
@@ -149,6 +160,10 @@ func main() {
 		}
 	}
 	writer.Flush()
+
+	fmt.Println("Total peers:", peerNum)
+	fmt.Println("Connectable peers:", connectablePeerNum)
+	fmt.Println("Unable to connect peers:", unconnectablePeerNum)
 }
 
 func getLatency(u *url.URL) (time.Duration, error) {
